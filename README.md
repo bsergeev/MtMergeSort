@@ -2,7 +2,15 @@
 Exploration of WebAssembly multi-threading on plain merge sort
 
 ## Build
-To build a native executable, run `build.sh` (on Windows, run it in _Git Bash_).  
+To build a native executable, run `build.sh` (on Windows, run it in _Git Bash_) or invoke your compiler directly, e.g. with sanitizers:
+```
+g++ src/main.cpp -std=c++17 -g -O0 -lpthread s -fsanitize=thread
+```
+or  
+```
+g++ src/main.cpp -std=c++17 -g -O0 -lpthread s -fsanitize=address
+```
+
 To build WebAssembly, compile with Emscripten (I used version 1.38.16):  
 ```
 emcc -std=c++17 -O3 -DNDEBUG -s USE_PTHREADS=1 -s PTHREAD_POOL_SIZE=7 -s PROXY_TO_PTHREAD=1 -s TOTAL_MEMORY=1073741824 -o t.js main.cpp
