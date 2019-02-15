@@ -1,5 +1,5 @@
-cmake_minimum_required(VERSION 3.0)
-set(REQUIRED_CPP_VERSION 14)
+cmake_minimum_required(VERSION 3.11)
+set(REQUIRED_CPP_VERSION 17)
 
 set(PROJECT_NAME c)
 project(${PROJECT_NAME} CXX)
