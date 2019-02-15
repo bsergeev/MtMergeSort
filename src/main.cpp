@@ -1,3 +1,4 @@
+
 #include <array>
 #include <cassert>
 #include <chrono>
@@ -6,29 +7,25 @@
 #include <stack>
 #include <vector>
 
-namespace util {
-template<typename TimeT = std::chrono::microseconds,
-    typename ClockT = std::chrono::high_resolution_clock,
-    typename DurationT = double>
-    class Stopwatch
-{
-public:
-    Stopwatch() { start(); }
-    void start() { _start = _end = ClockT::now(); }
-    DurationT stop() { _end = ClockT::now();  return elapsed(); }
-    DurationT elapsed() {
-        const auto delta = std::chrono::duration_cast<TimeT>(_end - _start);
-        return static_cast<DurationT>(delta.count());
-    }
-private:
-    std::chrono::time_point<ClockT> _start, _end;
-};
-} // namespace util
-
 // To build single-threaded code, change SINGLE_THREADED to true:
 constexpr bool SINGLE_THREADED = false;
 static const size_t N = 10'000'000;
 using value_t = float;
+
+namespace util {
+template<typename TimeT  = std::chrono::microseconds,
+         typename ClockT = std::chrono::high_resolution_clock,
+         typename DurationT = double>
+class Stopwatch {
+public:
+  Stopwatch() noexcept { start(); }
+  void start() noexcept { _start = _end = ClockT::now(); }
+  DurationT stop() noexcept { _end = ClockT::now();  return elapsed(); }
+  DurationT elapsed() const { return static_cast<DurationT>(std::chrono::duration_cast<TimeT>(_end-_start).count()); }
+private:
+  std::chrono::time_point<ClockT> _start, _end;
+};
+} // namespace util
 
 // Merges two sections of A[]: A[l..m] and A[m+1..r] 
 void merge(std::array<value_t, N>& A, size_t l, size_t m, size_t r) { 
@@ -113,7 +110,7 @@ int main()
 { 
   // Allocate the array on the heap (to avoid stack overflow)
   auto pArr = std::make_unique<std::array<value_t, N>>();
-  std::array<value_t, N>& arr = *(pArr.get());
+  auto& arr = *(pArr.get());
 
   // Random initialize the array
   for (size_t i = 0; i < N; ++i) {
@@ -122,10 +119,12 @@ int main()
   
   util::Stopwatch<> stopwatch;
   if constexpr (SINGLE_THREADED) {
-    // Single-threaded sort (about 37.3 seconds for 10M array)
+    // Single-threaded sort (about 37.3 seconds for 100M array)
     mergeSort(arr, 0, N - 1);
-  } else {
-    // Sort on 4 + 2 threads (about 10.6 second for 10M array)
+  } 
+  else 
+  {
+    // Sort on 4 + 2 threads (about 10.6 second for 100M array)
     static const size_t N_THREADS = 4;
     static_assert(N > N_THREADS, "N is too small!");
     std::array<size_t, N_THREADS + 1> n;
@@ -139,13 +138,13 @@ int main()
     std::array<std::future<void>, N_THREADS> futures;
     for (size_t i = 0; i < N_THREADS; ++i) {
       futures[i] = std::async(std::launch::async,
-        [&arr, l = n[i], r = n[i + 1] - 1]{ mergeSort(arr, l, r); });
+        [&arr, l=n[i], r=n[i+1]-1] { mergeSort(arr, l, r); });
     }
 
     std::array<std::future<void>, N_THREADS / 2> futures2;
     for (size_t i = 0; i < N_THREADS / 2; ++i) {
       futures2[i] = std::async(std::launch::async,
-        [&arr, &futures, i2 = 2 * i, l = n[2 * i], m = n[2 * i + 1] - 1, r = n[2 * i + 2] - 1]{
+        [&arr, &futures, i2=2*i, l=n[2*i], m=n[2*i + 1]-1, r=n[2*i + 2]-1] {
           futures[i2].get(); futures[i2 + 1].get();
           merge(arr, l, m, r);
         });
@@ -157,10 +156,7 @@ int main()
   
   // Check that the array is indeed sorted
   const bool sorted = [&arr]() {
-    for (size_t i = 1; i < N; ++i) {
-      if (arr[i - 1] > arr[i])
-        return false;
-    }
+    for (size_t i = 1; i < N; ++i) if (arr[i-1] > arr[i]) return false;
     return true;
   }();
   std::cout << "Sorted " << (sorted ? "successfully" : "UNSUCCESSFULLY") 
