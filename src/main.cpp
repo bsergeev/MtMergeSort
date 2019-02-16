@@ -8,9 +8,24 @@
 #include <vector>
 
 // To build single-threaded code, change SINGLE_THREADED to true:
-constexpr bool SINGLE_THREADED = false;
-static const size_t N = 10'000'000;
+constexpr bool SINGLE_THREADED = true; // false;
+static const size_t N = 10'000'000; // size of the array to sort
 using value_t = float;
+
+#if (!SINGLE_THREADED)
+  constexpr size_t N_LEVELS = 3; // 1 level -> 2 threads, 2 -> 4 threads, 3 -> 8 threads
+  constexpr size_t MAX_THREADS = 1 << N_LEVELS;
+  static_assert(N > MAX_THREADS, "N is too small!");
+
+  constexpr std::array<size_t, MAX_THREADS + 1> ComputeArrIndices() {
+    std::array<size_t, MAX_THREADS + 1> n{};
+    for (size_t i = 0; i < MAX_THREADS; ++i) {
+      n[i] = i * N / MAX_THREADS;
+    }
+    n[MAX_THREADS] = N;
+    return n;
+  }
+#endif
 
 namespace util {
 template<typename TimeT  = std::chrono::microseconds,
@@ -118,41 +133,54 @@ int main()
   }
   
   util::Stopwatch<> stopwatch;
+
   if constexpr (SINGLE_THREADED) {
-    // Single-threaded sort (about 37.3 seconds for 100M array)
     mergeSort(arr, 0, N - 1);
   } 
-  else 
+  else // multiple threads
   {
-    // Sort on 4 + 2 threads (about 10.6 second for 100M array)
-    static const size_t N_THREADS = 4;
-    static_assert(N > N_THREADS, "N is too small!");
-    std::array<size_t, N_THREADS + 1> n;
-    for (size_t i = 0; i < N_THREADS; ++i) {
-      n[i] = i * N / N_THREADS;
-    }
-    n[N_THREADS] = N;
+    // Build indices of sub-arrays for the highest level. 
+    // For lower levels, it'll be traversed with `stride` depending on the level.
+    static const std::array<size_t, MAX_THREADS + 1> n = ComputeArrIndices();
 
-    stopwatch.start();
+    // Process each level by spawning worker threads to sort sub-arrays
+    static std::array<std::future<void>, MAX_THREADS> sort_future;
+    static std::array<std::future<void>, MAX_THREADS> merge_future;
+    for (size_t level = N_LEVELS; level > 0; --level) {
+      constexpr size_t one = 1;
+      const size_t N_threads = one << level;           // # of threads for this level
+      const size_t stride = one << (N_LEVELS - level); // stride for indices in `n` 
 
-    std::array<std::future<void>, N_THREADS> futures;
-    for (size_t i = 0; i < N_THREADS; ++i) {
-      futures[i] = std::async(std::launch::async,
-        [&arr, l=n[i], r=n[i+1]-1] { mergeSort(arr, l, r); });
-    }
+      // Merge sub-arrays sorted at the previous level
+      if (level < N_LEVELS) { // wait for all sort futures from previous level
+        for (size_t i = 0; i < N_threads * 2; ++i) {
+          sort_future[i].get();
+        }
+        for (size_t i = 0; i < N_threads; ++i) {
+          merge_future[i] = std::async(std::launch::async,
+            [&arr, i, stride] { // stride is a power of 2 => stride/2 below is integer
+              merge(arr, n[stride*i], n[stride*i + stride/2]-1, n[stride*(i+1)]-1);
+            });
+        }
+      }
 
-    std::array<std::future<void>, N_THREADS / 2> futures2;
-    for (size_t i = 0; i < N_THREADS / 2; ++i) {
-      futures2[i] = std::async(std::launch::async,
-        [&arr, &futures, i2=2*i, l=n[2*i], m=n[2*i + 1]-1, r=n[2*i + 2]-1] {
-          futures[i2].get(); futures[i2 + 1].get();
-          merge(arr, l, m, r);
-        });
-    }
-    futures2[0].get();  futures2[1].get();
-    merge(arr, n[0], n[2] - 1, n[4] - 1);
+      // Sort sub-arrays
+      for (size_t i = 0; i < N_threads; ++i) {
+        sort_future[i] = std::async(std::launch::async,
+          [&arr, level, i, stride] {
+            if (level < N_LEVELS) {
+              merge_future[i].get(); 
+            }
+            mergeSort(arr, n[stride*i], n[stride*(i + 1)]-1);
+          });
+      }
+    } // level loop
+    sort_future[0].get();  
+    sort_future[1].get();
+    merge(arr, n[0], n[MAX_THREADS/2] - 1, n[MAX_THREADS] - 1);
   }
-  const auto elapsed = stopwatch.stop();
+
+  const auto elapsed_uS = stopwatch.stop();
   
   // Check that the array is indeed sorted
   const bool sorted = [&arr]() {
@@ -160,6 +188,6 @@ int main()
     return true;
   }();
   std::cout << "Sorted " << (sorted ? "successfully" : "UNSUCCESSFULLY") 
-            << " in " << elapsed / 1'000'000 << " seconds" << std::endl;
+            << " in " << elapsed_uS / 1'000'000 << " seconds" << std::endl;
   return 0;
 }
