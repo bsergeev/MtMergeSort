@@ -34,4 +34,5 @@ https://developers.google.com/web/updates/2018/10/wasm-threads
 and look in the Console (F12).
 
 ## Results
-While native code shows about 3.5 speed up when sorting 10,000,000 floats on 6 threads (4 first level and 2 second level sub-array merging), Chrome actiually gets twice as slow executing multi-threaded WebAssembly... After several runs, Chrome crashes. 
+Native code shows about 3 speed up when sorting 10,000,000 floats on 4 threads. When running 8 threads on a 4-core CPU, oversubscription constitutes itself in slight slowdown. WebAssembly running in Chrome 72 shows decent performance with a single thread (about 50% slower than native code), but gets slower executing multi-threaded WebAssembly:  
+![Comparison](/doc/results.png)
