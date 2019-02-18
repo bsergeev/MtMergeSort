@@ -2,6 +2,7 @@
 #include <array>
 #include <cassert>
 #include <chrono>
+#include <cstring>
 #include <iostream>
 #include <future>
 #include <stack>
@@ -14,13 +15,13 @@ static const size_t N = 10'000'000; // size of the array to sort
 using value_t = float;
 
 // The following are only for multi-threaded code
-#define FORCE_ASYNC
-//#undef FORCE_ASYNC
+//#define FORCE_ASYNC
+#undef FORCE_ASYNC
 constexpr size_t N_LEVELS = 2; // 1 level -> 2 threads, 2 -> 4 threads, 3 -> 8 threads
 constexpr size_t MAX_THREADS = 1 << N_LEVELS;
 static_assert(N > MAX_THREADS, "N is too small!");
 
-constexpr std::array<size_t, MAX_THREADS + 1> ComputeArrIndices() {
+constexpr std::array<size_t, MAX_THREADS + 1> ComputeArrIndices() noexcept {
   std::array<size_t, MAX_THREADS + 1> n{};
   for (size_t i = 0; i < MAX_THREADS; ++i) {
     n[i] = i * N / MAX_THREADS;
@@ -52,6 +53,9 @@ void merge(std::array<value_t, N>& A, size_t l, size_t m, size_t r) {
 
   // Copy data to left and right temp arrays, AL[] and AR[]
   std::vector<value_t> AL(n1), AR(n2);
+
+  // Replacing loops with memcpy makes no discernible difference (optimizing
+  // compilers must be doing this).
   for (size_t i = 0; i < n1; ++i) {
     AL[i] = A[l + i];
   }
@@ -65,64 +69,34 @@ void merge(std::array<value_t, N>& A, size_t l, size_t m, size_t r) {
     A[k++] = (AL[i] <= AR[j])? AL[i++] : AR[j++];
   }
 
+#if 0
   // Copy the remaining elements of AL[], if any
   while (i < n1) {
     A[k++] = AL[i++];
   }
-
   // Copy the remaining elements of AR[], if any
   while (j < n2) {
     A[k++] = AR[j++];
   }
+#else
+  if (i < n1) {
+    std::memcpy(&A[k], &AL[i], (n1-i)*sizeof(value_t));
+  }
+  if (j < n2) {
+    std::memcpy(&A[k], &AR[j], (n2-j)*sizeof(value_t));
+  }
+#endif
 }
 
-// Below is non-recursive implementation of this classic recursive one:
-//void mergeSort(std::array<value_t, N>& arr, size_t l, size_t r) {
-//  if (l < r) {
-//    const size_t m = l + (r - l) / 2; // = (l + r)/2
-//    mergeSort(arr, l, m);
-//    mergeSort(arr, m + 1, r);
-//    merge(arr, l, m, r);
-//  }
-//} 
-void mergeSort(std::array<value_t, N>& arr, size_t l0, size_t r0) {
-  assert(l0 < r0);
-
-  struct MergeSortParams {
-    size_t l, r; // parameters
-    size_t m;    // local variable
-    size_t location;
-  };
-  std::stack<MergeSortParams> stk;
-  stk.push({ l0, r0, 0, 1 }); // for location = 1, m is not needed
-
-  while (!stk.empty()) {
-    const auto& stkTop = stk.top();
-    const size_t l = stkTop.l;
-    const size_t r = stkTop.r;
-          size_t m = stkTop.m;
-    const size_t location = stkTop.location;
-    stk.pop();
-
-    if (l < r) {
-      switch (location) {
-      case 1:
-        m = l + (r - l) / 2; // = (l + r) / 2;
-        stk.push({ l, r, m, 2 });
-        stk.push({ l, m, 0, 1 });
-        break;
-      case 2:
-        stk.push({ l, r, m, 3 });
-        stk.push({ m+1, r, 0, 1 });
-        break;
-      case 3:
-        merge(arr, l, m, r);
-        break;
-      }
-    }
+void mergeSort(std::array<value_t, N>& arr, size_t l, size_t r) {
+  if (l < r) {
+    const size_t m = l + (r - l) / 2; // = (l + r)/2
+    mergeSort(arr, l, m);
+    mergeSort(arr, m + 1, r);
+    merge(arr, l, m, r);
   }
 } 
-  
+
 int main() 
 { 
   std::cout << "Sorting "<< N <<" floats on "<< (SINGLE_THREADED? "single thread" : std::to_string(MAX_THREADS)+" threads") << std::endl;
