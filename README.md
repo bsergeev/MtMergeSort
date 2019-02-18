@@ -38,6 +38,6 @@ https://developers.google.com/web/updates/2018/10/wasm-threads
 and look in the Console (F12).
 
 ## Results
-Native code shows about 3x speed up when sorting 10,000,000 floats on 4 threads. When running 8 threads on a 4-core CPU, oversubscription constitutes itself in slight slowdown. WebAssembly running in Chrome 72 shows the expected performance with a single thread (about twice as slow as the native code), but gets slower executing multi-threaded WebAssembly:  
+Native code shows about 3x speed up when sorting 10,000,000 floats on 4 threads. When running 8 threads on a 4-core CPU, oversubscription constitutes itself in slight slowdown. WebAssembly running in Chrome 72 shows the expected performance with a single thread (1.5...2 times as slow as the native code), but gets slower executing multi-threaded WebAssembly:  
 ![Comparison](/doc/results.png)
-Sorting on a single thread takes native code 1.80 seconds, WebAssembly 3.49 seconds, and manually written JavaScript 4.69 seconds.
+Sorting on a single thread takes native code 1.80 seconds, WebAssembly 3.11 seconds, and manually written JavaScript 4.69 seconds.
