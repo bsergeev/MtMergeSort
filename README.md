@@ -11,9 +11,13 @@ or
 g++ src/main.cpp -std=c++17 -g -O0 -lpthread s -fsanitize=address
 ```
 
-To build WebAssembly, compile with Emscripten (I used version 1.38.16):  
+To build WebAssembly, compile with Emscripten (I used version 1.38.16). For single-threaded version, build as:  
 ```
-emcc -std=c++17 -O3 -DNDEBUG -s USE_PTHREADS=1 -s PTHREAD_POOL_SIZE=7 -s PROXY_TO_PTHREAD=1 -s TOTAL_MEMORY=1073741824 -o t.js main.cpp
+emcc -std=c++17 -Os -DNDEBUG  --llvm-lto 1 -s FILESYSTEM=0 -s TOTAL_MEMORY=1073741824 -o t.js main.cpp
+```
+and for multi-threaded runs it is necessary to enable filesystem emulation (for some reasom it is required even without memoty init file) and set threading related options, e.g. for 4 threads:  
+```
+ emcc -std=c++17 -Os --llvm-lto 1 -s FILESYSTEM=1 -s -s USE_PTHREADS=1 -s PTHREAD_POOL_SIZE=7 -s PROXY_TO_PTHREAD=1 -DNDEBUG -s TOTAL_MEMORY=1073741824 --memory-init-file 0 -o t.js main.cpp
 ```
 Then create `index.html`, e.g.  
 ```html
