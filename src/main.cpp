@@ -1,11 +1,10 @@
-
+// Single- or multi-threaded merge sort
 #include <array>
 #include <cassert>
 #include <chrono>
 #include <cstring>
 #include <iostream>
 #include <future>
-#include <stack>
 #include <string>
 #include <vector>
 
