@@ -16,7 +16,7 @@ using value_t = float;
 // The following are only for multi-threaded code
 //#define FORCE_ASYNC
 #undef FORCE_ASYNC
-constexpr size_t N_LEVELS = 2; // 1 level -> 2 threads, 2 -> 4 threads, 3 -> 8 threads
+constexpr size_t N_LEVELS = 3; // 1 level -> 2 threads, 2 -> 4 threads, 3 -> 8 threads
 constexpr size_t MAX_THREADS = 1 << N_LEVELS;
 static_assert(N > MAX_THREADS, "N is too small!");
 
