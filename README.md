@@ -40,4 +40,4 @@ and look in the Console (F12).
 ## Results
 Native code shows about 3x speed up when sorting 10,000,000 floats on 4 threads. When running 8 threads on a 4-core CPU, oversubscription constitutes itself in slight slowdown. WebAssembly running in Chrome 72 shows the expected performance with a single thread (1.5...2 times as slow as the native code), but gets slower executing multi-threaded WebAssembly:  
 ![Comparison](/doc/results.png)
-Sorting on a single thread takes native code 1.80 seconds, WebAssembly 3.1...3.3 seconds, and manually written JavaScript 4.69 seconds. Splitting the work between several threads causes the sort time to inscrease, this tendency is worse in Chrome than in Firefox.
+Sorting on a single thread takes native code 1.80 seconds, WebAssembly 3.1...3.3 seconds, manually written JavaScript 4.69 seconds, and Kotlin/JVM (Kotlin 1.3.21 with JRE 1.8) 2.2 seconds. Splitting the work between several threads causes the sort time in WebAssembly to inscrease, this tendency is worse in Chrome than in Firefox.
