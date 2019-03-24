@@ -1,35 +1,35 @@
-const N = 10000000; // size of the array to sort
-var arr = new Float32Array(N);
+const N = 10000000; // size of the array to sort (must be even!)
+const arr = new Float32Array(N);
+const aL = new Float32Array(N/2);
+const aR = new Float32Array(N/2);
 
 // Merges two sections of A[]: A[l..m] and A[m+1..r] 
 const merge = (l, m, r) => { 
   const n1 = m - l + 1;
   const n2 = r - m;
 
-  // Copy data to left and right temp arrays, AL[] and AR[]
-  let AL = new Float32Array(n1);
-  let AR = new Float32Array(n2);
+  // Copy data to left and right temp arrays, aL[] and aR[]
   for (let i = 0; i < n1; ++i) {
-    AL[i] = arr[l + i];
+    aL[i] = arr[l + i];
   }
   for (let i = 0; i < n2; ++i) {
-    AR[i] = arr[m + 1 + i];
+    aR[i] = arr[m + 1 + i];
   }
   
   // Merge the temp arrays back into arr[l..r]
   let i = 0, j = 0, k = l;
   while (i < n1 && j < n2) {
-    arr[k++] = (AL[i] <= AR[j])? AL[i++] : AR[j++];
+    arr[k++] = (aL[i] <= aR[j])? aL[i++] : aR[j++];
   }
 
-  // Copy the remaining elements of AL[], if any
+  // Copy the remaining elements of aL[], if any
   while (i < n1) {
-    arr[k++] = AL[i++];
+    arr[k++] = aL[i++];
   }
 
-  // Copy the remaining elements of AR[], if any
+  // Copy the remaining elements of aR[], if any
   while (j < n2) {
-    arr[k++] = AR[j++];
+    arr[k++] = aR[j++];
   }
 };
 
