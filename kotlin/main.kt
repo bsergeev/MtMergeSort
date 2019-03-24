@@ -1,8 +1,10 @@
 import kotlin.random.*
 import kotlin.system.measureTimeMillis
 
-const val N = 10000000 // size of the array to sort
-var arr: FloatArray = FloatArray(N)
+const val N = 10_000_000 // size of the array to sort (keep it even)
+val arr = FloatArray(N)
+val aL  = FloatArray(N/2)
+val aR  = FloatArray(N/2)
 
 // Merges two sections of arr[]: arr[l..m] and arr[m+1..r]
 fun merge(l: Int, m: Int, r: Int) {
@@ -10,31 +12,25 @@ fun merge(l: Int, m: Int, r: Int) {
     val n2 = r - m
 
     // Copy data to left and right temp arrays, aL[] and aR[]
-    val aL = FloatArray(n1)
-    val aR = FloatArray(n2)
-    for (i in aL.indices) {
+    for (i in 0 until n1)
         aL[i] = arr[l + i]
-    }
-    for (i in aR.indices) {
+    for (i in 0 until n2)
         aR[i] = arr[m + 1 + i]
-    }
 
     // Merge the temp arrays back into arr[l..r]
     var i = 0
     var j = 0
     var k = l
-    while (i < n1 && j < n2) {
+    while (i < n1 && j < n2)
         arr[k++] = if (aL[i] <= aR[j]) aL[i++] else aR[j++]
-    }
 
     // Copy the remaining elements of AL[], if any
-    while (i < n1) {
+    while (i < n1)
         arr[k++] = aL[i++]
-    }
+
     // Copy the remaining elements of AR[], if any
-    while (j < n2) {
+    while (j < n2)
         arr[k++] = aR[j++]
-    }
 }
 
 fun mergeSort(l: Int, r: Int) {
@@ -47,25 +43,22 @@ fun mergeSort(l: Int, r: Int) {
 }
 
 fun checkSorted(): Boolean {
-    for (i in 1 until N) {
+    for (i in 1 until N)
         if (arr[i - 1] > arr[i]) return false
-    }
     return true
 }
 
 fun main(args: Array<String>) {
     println("Sorting $N floats on single thread")
 
-    //val rand = Random()
-    for (i in arr.indices) {
+    //val rand = (0..1).random()
+    for (i in arr.indices)
         arr[i] = Random.nextFloat()
-    }
 
     val elapsedMilliS = measureTimeMillis {
         mergeSort(0, N - 1)
-        //arr.sort()
     }
-    
+
     // Check that the array is indeed sorted
     val sorted: Boolean = checkSorted()
     println("Sorted ${if(sorted) "successfully" else "UNSUCCESSFULLY"} in ${elapsedMilliS.toDouble()/1000} seconds")
