@@ -6,7 +6,6 @@
 #include <iostream>
 #include <future>
 #include <string>
-#include <vector>
 
 // To build single-threaded code, change SINGLE_THREADED to true:
 constexpr bool SINGLE_THREADED = false;
