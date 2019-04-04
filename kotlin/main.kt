@@ -3,11 +3,14 @@ import kotlin.system.measureTimeMillis
 
 const val N = 10_000_000 // size of the array to sort (keep it even)
 val arr = FloatArray(N)
-val aL  = FloatArray(N/2)
-val aR  = FloatArray(N/2)
+val arL = FloatArray(N/2)
+val arR = FloatArray(N/2)
 
 // Merges two sections of arr[]: arr[l..m] and arr[m+1..r]
 fun merge(l: Int, m: Int, r: Int) {
+	val aR = arR // local aliases speed tings up in K/Native
+	val aL = arL
+
     val n1 = m - l + 1
     val n2 = r - m
 
@@ -51,7 +54,6 @@ fun checkSorted(): Boolean {
 fun main(args: Array<String>) {
     println("Sorting $N floats on single thread")
 
-    //val rand = (0..1).random()
     for (i in arr.indices)
         arr[i] = Random.nextFloat()
 

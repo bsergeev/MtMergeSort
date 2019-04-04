@@ -131,22 +131,22 @@ int main()
     static std::array<std::future<void>, MAX_THREADS> sort_future;
     if constexpr (N_LEVELS == 1) //---------------------------------------------
     {
-      sort_future[0] = std::async( ASYNC [&arr, &tmp] { mergeSort(arr, tmp, n[0], n[1]-1); });
-      sort_future[1] = std::async( ASYNC [&arr, &tmp] { mergeSort(arr, tmp, n[1], n[2]-1); });
+      sort_future[0] = std::async(ASYNC [&arr, &tmp] { mergeSort(arr, tmp, n[0], n[1]-1); });
+      sort_future[1] = std::async(ASYNC [&arr, &tmp] { mergeSort(arr, tmp, n[1], n[2]-1); });
     }
     else if constexpr (N_LEVELS == 2) //----------------------------------------
     {
       // Sort four sub-arrays
-      static auto sort_future0 = std::async( ASYNC [&arr, &tmp] { mergeSort(arr, tmp, n[0], n[1]-1); });
-      static auto sort_future1 = std::async( ASYNC [&arr, &tmp] { mergeSort(arr, tmp, n[1], n[2]-1); });
-      static auto sort_future2 = std::async( ASYNC [&arr, &tmp] { mergeSort(arr, tmp, n[2], n[3]-1); });
-      static auto sort_future3 = std::async( ASYNC [&arr, &tmp] { mergeSort(arr, tmp, n[3], n[4]-1); });
+      static auto sort_future0 = std::async(ASYNC [&arr, &tmp] { mergeSort(arr, tmp, n[0], n[1]-1); });
+      static auto sort_future1 = std::async(ASYNC [&arr, &tmp] { mergeSort(arr, tmp, n[1], n[2]-1); });
+      static auto sort_future2 = std::async(ASYNC [&arr, &tmp] { mergeSort(arr, tmp, n[2], n[3]-1); });
+      static auto sort_future3 = std::async(ASYNC [&arr, &tmp] { mergeSort(arr, tmp, n[3], n[4]-1); });
 
       // Merge two sub-arrays
-      sort_future[0] = std::async( ASYNC [&arr, &tmp] { 
+      sort_future[0] = std::async(ASYNC [&arr, &tmp] { 
         sort_future0.get(); sort_future1.get(); merge(arr, tmp, n[0], n[1]-1, n[2]-1); 
       });
-      sort_future[1] = std::async( ASYNC [&arr, &tmp] { 
+      sort_future[1] = std::async(ASYNC [&arr, &tmp] { 
         sort_future2.get(); sort_future3.get(); merge(arr, tmp, n[2], n[3]-1, n[4]-1); 
       });
     }
@@ -154,7 +154,7 @@ int main()
     {
       // Sort sub-arrays
       for (size_t i = 0; i < MAX_THREADS; ++i) {
-        sort_future[i] = std::async( ASYNC [&arr, &tmp, i] { mergeSort(arr, tmp, n[i], n[i + 1]-1); });
+        sort_future[i] = std::async(ASYNC [&arr, &tmp, i] { mergeSort(arr, tmp, n[i], n[i + 1]-1); });
       }
 
       // Process each level by spawning worker threads to merge sub-arrays
@@ -171,7 +171,7 @@ int main()
 
         // Merge sub-arrays
         for (size_t i = 0; i < N_threads; ++i) {
-          sort_future[i] = std::async( ASYNC
+          sort_future[i] = std::async(ASYNC
             [&arr, &tmp, i, stride] { // stride is a power of 2 => stride/2 below is integer
               merge(arr, tmp, n[stride*i], n[stride*i + stride/2]-1, n[stride*(i+1)]-1);
             });
