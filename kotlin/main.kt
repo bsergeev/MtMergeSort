@@ -8,7 +8,8 @@ val arR = FloatArray(N/2)
 
 // Merges two sections of arr[]: arr[l..m] and arr[m+1..r]
 fun merge(l: Int, m: Int, r: Int) {
-	val aR = arR // local aliases speed tings up in K/Native
+	val ar = arr // local aliases speed tings up in K/Native
+	val aR = arR
 	val aL = arL
 
     val n1 = m - l + 1
@@ -16,24 +17,24 @@ fun merge(l: Int, m: Int, r: Int) {
 
     // Copy data to left and right temp arrays, aL[] and aR[]
     for (i in 0 until n1)
-        aL[i] = arr[l + i]
+        aL[i] = ar[l + i]
     for (i in 0 until n2)
-        aR[i] = arr[m + 1 + i]
+        aR[i] = ar[m + 1 + i]
 
     // Merge the temp arrays back into arr[l..r]
     var i = 0
     var j = 0
     var k = l
     while (i < n1 && j < n2)
-        arr[k++] = if (aL[i] <= aR[j]) aL[i++] else aR[j++]
+        ar[k++] = if (aL[i] <= aR[j]) aL[i++] else aR[j++]
 
     // Copy the remaining elements of AL[], if any
     while (i < n1)
-        arr[k++] = aL[i++]
+        ar[k++] = aL[i++]
 
     // Copy the remaining elements of AR[], if any
     while (j < n2)
-        arr[k++] = aR[j++]
+        ar[k++] = aR[j++]
 }
 
 fun mergeSort(l: Int, r: Int) {

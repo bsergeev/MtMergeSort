@@ -1,4 +1,5 @@
 build.*/
 *.jar
 *.exe
+*.kexe
 *.a
